@@ -11,7 +11,7 @@ app.use((req,res, next)=>{
     next();
 })
 app.get('/', (req, res) => {
-    res.send('Knackers Bank Backend is running!');
+    res.send('ODbank Bankend is up and running!');
   });
 const PORT = process.env.PORT || 5000
  app.use('/api/users',users);
