@@ -1,0 +1,10 @@
+const express = require('express');
+const  {createAccount,getAccount, getAllAccounts, updateAccount, deleteAccount} = require('../controllers/bankAccount.js');
+const auth = require('../middleware/auth.js');
+const router = express.Router();
+router.post('/', auth, createAccount);
+router.get('/',auth,getAccount);
+router.get('/allAccounts', getAllAccounts);
+router.put('/:id',updateAccount);
+router.delete('/:id', deleteAccount);
+module.exports = router;
