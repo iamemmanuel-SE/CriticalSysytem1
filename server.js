@@ -13,6 +13,7 @@ app.use((req,res, next)=>{
 app.get('/', (req, res) => {
     res.send('ODbank Bankend is up and running!');
   });
+  
 const PORT = process.env.PORT || 5000
  app.use('/api/users',users);
  app.use('/api/accounts',userBankAccounts);

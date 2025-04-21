@@ -19,7 +19,7 @@ const verifyEmail = async (req, res) => {
   
     try {
       const decoded = jwt.verify(token, process.env.SECRET);
-      const user = await User.findById(decoded.userId);
+      const user = await User.findById(decoded._id);
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
       }
@@ -40,7 +40,7 @@ const signup = async(req, res) =>{
           const token = createToken(user.id);
           const userId = user.id;
 
-          const verificationToken = jwt.sign({ userId: user._id }, process.env.SECRET, { expiresIn: '1d' });
+          const verificationToken = jwt.sign({ _id: user._id }, process.env.SECRET, { expiresIn: '1d' });
 
           const verificationLink = `https://criticalbankbackend-4a0be9a2198b.herokuapp.com/api/users/verifyEmail?token=${verificationToken}`;
           
