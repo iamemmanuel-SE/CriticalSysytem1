@@ -11,7 +11,7 @@ app.use((req,res, next)=>{
     next();
 })
 app.get('/', (req, res) => {
-    res.send('ODbank Bankend is up and running!');
+    res.send('Optimal Bank is up and running!');
   });
   
 const PORT = process.env.PORT || 5000
