@@ -16,7 +16,7 @@ const ses = new AWS.SES();
 
 
 // Function to send an email
-const sendEmail = expressAsyncHandler(async (receiverEmail="dicksonamankwaah3@gmail.com", senderEmail="dicksonamankwaah3@gmail.com", emailSubject="hello Dickson", emailBody="my friend") => {
+const sendEmail = expressAsyncHandler(async (receiverEmail="fsdevmanuel@gmail.com", senderEmail="emmanuelamank3482@gmail.com", emailSubject="hello Emmanuel", emailBody="my friend") => {
     const params = {
       Source: senderEmail,  // Verified email address
       Destination: {

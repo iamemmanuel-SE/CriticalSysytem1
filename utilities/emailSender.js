@@ -11,7 +11,7 @@ const sendBrevoEmail = async function (options) {
     
   
       const data = {
-        sender: { email: 'dicksonamankwaah3@gmail.com', name: 'Knackers Bank' }, // { email: 'sender@example.com', name: 'Sender Name' }
+        sender: { email: 'emmanuelamank3482@gmail.com', name: 'Optimal Bank' }, // { email: 'sender@example.com', name: 'Sender Name' }
         to:to, // [{ email: 'recipient@example.com', name: 'Recipient Name' }]
         subject: subject,
         htmlContent: emailTemplate,
