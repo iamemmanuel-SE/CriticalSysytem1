@@ -9,7 +9,7 @@ const bcrypt = require('bcrypt');
     return jwt.sign({_id}, process.env.SECRET, {expiresIn: '2d'});
 
 }
-const generateOTP = () => {
+const generateOTP  = () => {
   return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
 };
 
@@ -46,7 +46,7 @@ const signup = async(req, res) =>{
           
           const emailTemplate = `
             <h1>Welcome ${username}!</h1>
-            <p>Thank you for signing up for Knackers Bank.</p>
+            <p>Thank you for signing up for Optica Bank</p>
             <p>Please verify your email by clicking the link below:</p>
             <a href="${verificationLink}">Verify Email</a>
           `;

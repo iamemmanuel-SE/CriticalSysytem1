@@ -25,3 +25,5 @@ const PORT = process.env.PORT || 5000
 }).catch((error)=>{
     console.error(error.message);
 })
+
+console.log("BREVO API KEY:", process.env.BREVO_API_KEY);

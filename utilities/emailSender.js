@@ -1,5 +1,5 @@
 const axios = require("axios")
-
+require('dotenv').config();
 const sendBrevoEmail = async function (options) {
 
     const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
@@ -11,7 +11,7 @@ const sendBrevoEmail = async function (options) {
     
   
       const data = {
-        sender: { email: 'emmanuelamank3482@gmail.com', name: 'OptimalBank' }, // { email: 'sender@example.com', name: 'Sender Name' }
+        sender: {email: 'emmanuelamank3482@gmail.com', name: 'OptimalBank'}, // { email: 'sender@example.com', name: 'Sender Name' }
         to:to, // [{ email: 'recipient@example.com', name: 'Recipient Name' }]
         subject: subject,
         htmlContent: emailTemplate,
