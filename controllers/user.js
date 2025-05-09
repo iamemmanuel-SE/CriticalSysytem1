@@ -1,12 +1,12 @@
 const User = require('../models/user.js');
 const jwt = require('jsonwebtoken');
-const sendBrevoEmail = require('../utilities/emailSender.js'); // adjust the path accordingly
+const sendBrevoEmail = require('../utilities/emailSender.js'); // adjust the path dingly
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 
 
  const createToken = (_id) =>{
-    return jwt.sign({_id}, process.env.SECRET, {expiresIn: '2d'});
+    return jwt.sign({_id}, process.env.SECRET, {expiresIn: '2d'});//
 
 }
 const generateOTP  = () => {
