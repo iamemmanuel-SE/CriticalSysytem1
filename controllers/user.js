@@ -52,7 +52,7 @@ const signup = async(req, res) =>{
           `;
 // Call the Brevo email function
 await sendBrevoEmail({
-subject: 'Welcome to Knackers Bank!',
+subject: 'Welcome to Optimal Bank!',
 to: [{ email: email, name: username }],
 emailTemplate,
 });
@@ -110,14 +110,14 @@ const forgotPassword = async (req, res) => {
     const emailTemplate = `
       <h1>Password Reset OTP</h1>
       <p>Hello ${user.username},</p>
-      <p>Use the following One-Time Password (OTP) to reset your Knackers Bank account password:</p>
+      <p>Use the following One-Time Password (OTP) to reset your Optimal Bank account password:</p>
       <h2>${otp}</h2>
       <p>This OTP will expire in 15 minutes.</p>
       <p>If you did not request this, please ignore this email.</p>
     `;
 
     await sendBrevoEmail({
-      subject: 'Knackers Bank Password Reset OTP',
+      subject: 'Optimal Bank Password Reset OTP',
       to: [{ email: email, name: user.username }],
       emailTemplate,
     });
