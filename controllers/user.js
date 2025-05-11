@@ -36,7 +36,7 @@ const verifyEmail = async (req, res) => {
 const signup = async(req, res) =>{
     const { username, email, password, role} = req.body;
     try{
-          const user = await User.signup(username, email, password,role);
+          const user = await User.signup(username, email, password,role, req);
           const token = createToken(user.id);
           const userId = user.id;
 
@@ -68,13 +68,13 @@ emailTemplate,
 const login = async(req, res) =>{
     const { email, password } = req.body;
     try{
-        const user = await User.login(email, password);
+        const user = await User.login(email, password, req);
          const token = createToken(user.id);
         const userId = user.id;
-        res.status(200).json({email:user.email, token, userId, role: user.role, emailVerified: user.emailVerified, loginLockUntil: user.loginLockUntil}); 
+        res.status(200).json({email:user.email, token, userId, role: user.role, emailVerified: user.emailVerified, lockLoginTimer: user.lockLoginTimer}); 
     }
     catch(error){
-        res.status(400).json({error: error.message,loginLockUntil: error.loginLockUntil || null});
+        res.status(400).json({error: error.message,lockLoginTimer: error.lockLoginTimer || null});
     }
 }
 const getAllUsers = async(req,res)=>{

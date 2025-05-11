@@ -1,7 +1,9 @@
 const mongoose = require('mongoose');
+const geoip = require('geoip-lite');
 const bcrypt = require('bcrypt');
 const Schema = mongoose.Schema;
 const validator = require('validator');
+const sendBrevoEmail = require('../utilities/emailSender.js');
 const UserSchema = new Schema({
     username: {
         type: String, 
@@ -29,18 +31,51 @@ const UserSchema = new Schema({
       otpExpiresAt: {
         type: Date,
       },
-      failedLoginAttempts: {
+      failedAccessAttempt: {
         type: Number,
         default: 0
       },
-      loginLockUntil: {
+      lockLoginTimer: {
         type: Date,
         default: null
+      },lastLogin: {
+        ip: { type: String, required: true },
+    
+        place: {
+          type: {
+            type: String,
+            enum: ['Point'],
+            required: true,
+            default: 'Point'
+          },
+          coordinates: {
+            type: [Number],                // [lng, lat]
+            required: true,
+            default: [0, 0],               // fallback if geoip fails
+            validate: {
+              validator: arr => arr.length === 2,
+              message: 'Coordinates must be [lng, lat]'
+            }
+          }
+        },
+    
+        city:    { type: String, required: true, default: 'Unknown' },
+        region:  { type: String, required: true, default: 'Unknown' },
+        country: { type: String, required: true, default: 'Unknown' },
+        at: { type: Date, required: true, default: Date.now }
       }
 
+      
 
 },{timeStamps: true})
-UserSchema.statics.signup = async function(username, email, password, role){
+UserSchema.statics.signup = async function(username, email, password, role, req){
+    //geolo=========================================
+    
+    // const loginLog = new LoginLog({
+    // email,
+    // ip,           // e.g. from req.headers or req.socket.remoteAddress
+    // success: false // default until we know the password check result
+    // });
     if(!username || !email || !password)
     {
         throw Error("Fill in all fields");
@@ -66,49 +101,93 @@ UserSchema.statics.signup = async function(username, email, password, role){
     }
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(password, salt);
-    const user = await this.create({username, email, password: hash, role});
-    return user;
+    // const user = await this.create({username, email, password: hash, role});
 
-    
+// Geo lOCATION
+let ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+  if (ip === '::1') ip = '127.0.0.1';
+
+  // GeoIP lookup
+  const geo = geoip.lookup(ip) || {};
+  const [lat, lng] = Array.isArray(geo.ll) && geo.ll.length === 2 ? geo.ll : [0, 0];
+  const now = new Date();
+  const newUser = await this.create({
+    username,
+    email,
+    password: hash,
+    role,
+    lastLogin: {
+      ip,
+      place: { type: 'Point', coordinates: [lng, lat] },
+      city:    geo.city    || 'Unknown',
+      region:  geo.region  || 'Unknown',
+      country: geo.country || 'Unknown',
+      at: now
+    }
+  });
+
+    return newUser;
+
 
 }
-UserSchema.statics.login = async function(email, password){
+
+//============================================================
+
+UserSchema.statics.login = async function(email, password, req){
+    //geolo=========================================
+    let ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '')
+    .split(',')[0]
+    .trim();
+    if (ip === '::1') ip = '127.0.0.1';
     if(!email || !password)
     {
         throw Error('Enter email and password');
     }
-    const isCorrectEmail = await this.findOne({email});
-    if(!isCorrectEmail)
+    const user = await this.findOne({email});
+    if(!user)
     {
         throw Error('Email is not found');
     }
     //check to see if system is locked
 
-    if(isCorrectEmail.loginLockUntil && isCorrectEmail.loginLockUntil > new Date())
+    if(user.lockLoginTimer && user.lockLoginTimer > new Date())
     {
-        const minutes = Math.ceil((isCorrectEmail.loginLockUntil - new Date())/(60 * 1000));
+        const minutes = Math.ceil((user.lockLoginTimer - new Date())/(60 * 1000));
         const err = new Error(`Account is locked. Try again in ${minutes} minutes(s).`);
-        err.loginLockUntil = isCorrectEmail.loginLockUntil;
+        err.loginLockTimer = user.lockLoginTimer;
         throw err;
 
     }
 
     
-    const isCorrectPassword = await bcrypt.compare(password, isCorrectEmail.password);
+    const isCorrectPassword = await bcrypt.compare(password, user.password);
     if(!isCorrectPassword)
     {
-        isCorrectEmail.failedLoginAttempts += 1;
+        user.failedAccessAttempt += 1;
     
-        await isCorrectEmail.save();
+        await user.save();
         console.log("Failed");
-        console.log("login failed attemptps", isCorrectEmail.failedLoginAttempts);
-        if(isCorrectEmail.failedLoginAttempts >= 5){
+        console.log("login failed attemptps", user.failedAccessAttempt);
+        if(user.failedAccessAttempt >= 5){
             console.log("greater than 5");
-              isCorrectEmail.loginLockUntil = new Date(Date.now() + 15 * 60 * 1000);
-            isCorrectEmail.failedLoginAttempts = 0;
-            await isCorrectEmail.save();
-            const err = new Error('Password is not correct. Your account is locked for 15 minutes.');
-            err.loginLockUntil = isCorrectEmail.loginLockUntil;
+              user.lockLoginTimer = new Date(Date.now() + 1 * 60 * 1000);
+            user.failedAccessAttempt = 0;
+            await user.save();
+            const err = new Error('Password is not correct. Your account is locked for 5 minutes.');
+            err.lockLoginTimer = user.lockLoginTimer;
+            const emailTemplate = `
+            
+                <p>Failed multiple login attempts, your account is temporary locked for 5 minutes, reset your password after 5 minutes</p>
+                
+                
+              `;
+            // Call the Brevo email function
+            console.log(user.username)
+            await sendBrevoEmail({
+            subject: 'Failed login Attempts',
+            to: [{ email, name: user.username }],
+            emailTemplate,
+            });
             throw err;            
 
             
@@ -119,6 +198,59 @@ UserSchema.statics.login = async function(email, password){
         throw Error('Password is not correct');
 
     }
+    const geo = geoip.lookup(ip)||{};
+    const now = new Date();
+  const coords = Array.isArray(geo.ll) && geo.ll.length === 2
+    ? [geo.ll[1], geo.ll[0]]  // [lng, lat]
+    : [0, 0];
+    const currentLogin = {
+      ip,
+      place:   { type: 'Point', coordinates: coords },
+      city:       geo.city    || 'Unknown',
+      region:     geo.region  || 'Unknown',
+      country:    geo.country || 'Unknown',
+      at:         now          // ← include timestamp here
+    };
+  
+
+
+  //  Compare to last login for fraud detection
+  const prevLogin = user.lastLogin;
+  if (prevLogin && Array.isArray(prevLogin.place.coordinates)) {
+   
+
+    const distance = getKilometers(prevLogin.place.coordinates,coords);
+    const minutesSinceLastLogin = (now - new Date(prevLogin.at)) / 1000/60;
+
+    if (distance > 1000 && minutesSinceLastLogin < 60) {
+          user.loginLockTimer = new Date(Date.now() + 5 * 60 * 1000);
+
+  // Save the lock status
+  await user.save();
+      // Potential fraud detected
+      const emailTemplate = `
+    <p><strong>Unusual Login Detected</strong></p>
+    <p>A login to your KnackersBank account occurred from a different place.</p>
+    <p><strong>place:</strong> ${geo.city}, ${geo.region}, ${geo.country}</p>
+    <p>If this was not you, we recommend resetting your password immediately.</p>
+    <p>Thank you,<br>KnackersBank Security Team</p>
+       `;
+
+      await sendBrevoEmail({
+        subject: 'Unusual Login Alert',
+        to: [{ email, name: user.username }],
+        emailTemplate
+      });
+    }
+  }
+
+
+// Save current login
+user.lastLogin = currentLogin;
+await user.save();
+// loginLog.success = true;
+// await loginLog.save();
+return user;
     
     //lock the account if 4 attempst fail
 
@@ -126,11 +258,30 @@ UserSchema.statics.login = async function(email, password){
     //if login is successful this time, reset the attemptssa
     if(isCorrectPassword)
     {
-    isCorrectEmail.failedLoginAttempts = 0;
-    isCorrectEmail.loginLockUntil = null;
-    await isCorrectEmail.save();
+    user.failedAccessAttempt = 0;
+    user.lockLoginTimer = null;
+    await user.save();
     }
-    return isCorrectEmail;
+    return user;
     
 }
+UserSchema.index({ 'lastLogin.place': '2dsphere' });// Create a 2dsphere index on the location field
+const getKilometers = (coord1, coord2) => {
+    const [lon1, lat1] = coord1;
+    const [lon2, lat2] = coord2;
+  
+    const toRad = (value) => (value * Math.PI) / 180;
+    const R = 6371;
+  
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+  
+    const a = Math.sin(dLat / 2) ** 2 +
+              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  
+    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+  };
+
+  
+  module.exports = getKilometers;
 module.exports = mongoose.model('User', UserSchema);
