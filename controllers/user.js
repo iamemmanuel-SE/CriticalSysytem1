@@ -46,7 +46,7 @@ const signup = async(req, res) =>{
           
           const emailTemplate = `
             <h1>Welcome ${username}!</h1>
-            <p>Thank you for signing up for Optica Bank</p>
+            <p>Thank you for signing up for Optical Bank</p>
             <p>Please verify your email by clicking the link below:</p>
             <a href="${verificationLink}">Verify Email</a>
           `;

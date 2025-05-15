@@ -11,6 +11,8 @@ const users = require('./routes/users.js');
 const app = express();
 app.use(express.json());
 app.use((req,res, next)=>{
+
+    
     console.log(req.path, req.body);
     next();
 })
