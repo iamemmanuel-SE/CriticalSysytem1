@@ -229,11 +229,12 @@ UserSchema.statics.login = async function(email, password, req){
   await user.save();
       // Potential fraud detected
       const emailTemplate = `
-    <p><strong>Unusual Login Detected</strong></p>
-    <p>A login to your KnackersBank account occurred from a different place.</p>
-    <p><strong>place:</strong> ${geo.city}, ${geo.region}, ${geo.country}</p>
-    <p>If this was not you, we recommend resetting your password immediately.</p>
-    <p>Thank you,<br>KnackersBank Security Team</p>
+        <p><strong>Unusual Login Activity</strong></p>
+        <p>We noticed a login to your Optimal Bank account from a new location.</p>
+        <p><strong>Location:</strong> ${geo.city}, ${geo.region}, ${geo.country}</p>
+        <p>If you did not authorize this activity, please reset your password immediately to secure your account.</p>
+        <p>Thank you,<br>The Optimal Bank Security Team</p>
+
        `;
 
       await sendBrevoEmail({
