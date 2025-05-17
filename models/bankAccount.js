@@ -22,7 +22,8 @@ const BankAccountSchema = new Schema({
         accountNumber:{
             type: String,
             required: true,
-        }
+        },
+       
 })
 
 module.exports = mongoose.model('Account', BankAccountSchema);

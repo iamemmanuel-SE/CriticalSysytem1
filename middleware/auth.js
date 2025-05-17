@@ -10,7 +10,7 @@ const auth = async(req,res,next)=>{
     const token = authorization.split(' ')[1];
      try{
           const { _id } = jwt.verify(token, process.env.SECRET);
-          req.user = await User.findOne({_id}).select('_id');
+          req.user = await User.findOne({_id}).select('_id email username');
           next();
     }
     catch(error){

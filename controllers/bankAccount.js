@@ -1,3 +1,4 @@
+
 const Account = require('../models/bankAccount.js');
 const mongoose = require('mongoose');
 const generateAccountNumber = require('../helpers/generateAccountNumber.js');
@@ -22,7 +23,8 @@ const createAccount = async (req, res) => {
       idNumber,
       balance,
       user: userId,
-      accountNumber
+      accountNumber,
+
     });
 
     // --- SEND WELCOME EMAIL ---
