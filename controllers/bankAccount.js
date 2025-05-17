@@ -24,6 +24,7 @@ const createAccount = async (req, res) => {
       balance,
       user: userId,
       accountNumber,
+      email: userEmail
 
     });
 
