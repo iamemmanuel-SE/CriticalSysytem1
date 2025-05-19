@@ -30,7 +30,11 @@ const BankAccountSchema = new Schema({
            username: {
             type: String, 
             required: true 
-        }
+        },
+        pin:{
+            type: String,
+            required:true 
+        },
 })
 
 module.exports = mongoose.model('Account', BankAccountSchema);

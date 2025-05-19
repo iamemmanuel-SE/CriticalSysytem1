@@ -3,12 +3,13 @@ const Account = require('../models/bankAccount.js');
 const mongoose = require('mongoose');
 const generateAccountNumber = require('../helpers/generateAccountNumber.js');
 const sendBrevoEmail = require('../utilities/emailSender.js'); // adjust path if needed
+const bcrypt = require('bcrypt');
 
 const createAccount = async (req, res) => {
   const userId = req.user._id;
   const userEmail = req.user.email;       // make sure req.user.email is populated by your auth middleware
   const userName = req.user.username || ''; // or however you store the user’s name
-  const { accountName, idNumber, balance } = req.body;
+  const { accountName, idNumber, balance, pin } = req.body;
 
   try {
     const accountExists = await Account.findOne({ user: userId });
@@ -17,16 +18,19 @@ const createAccount = async (req, res) => {
     }
 
     const rawAccountNumber = generateAccountNumber();
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(pin, salt);
     const accountNumber = 'ACC' + rawAccountNumber;
     const account = await Account.create({
 
       accountName,
       idNumber,
-      balance,
       user: userId,
+      balance,
       accountNumber,
       email: userEmail,
-      username: userName
+      username: userName,
+      pin :hash
 
     });
 
@@ -54,17 +58,38 @@ const createAccount = async (req, res) => {
 };
 
 //GET ACCOUNT BY USER
-const getAccount = async(req, res) =>{
-  const user = req.user._id;
-  try{
-        const account = await Account.findOne({user});
-        res.status(200).json(account);
+// controllers/bankAccount.js
+
+/**
+ * GET /api/accounts/user
+ * Return the authenticated user's single Account, or 404 if none.
+ */
+const getAccount = async (req, res) => {
+  try {
+    const account = await Account.findOne({ user: req.user._id });
+    if (!account) {
+      // Account not found → HTTP 404
+      return res.status(404).json({ error: 'No account found for this user' });
+    }
+    // Found → HTTP 200 with the account object
+    return res.status(200).json(account);
+  } catch (err) {
+    console.error('getAccount error:', err);
+    return res.status(500).json({ error: 'Server error' });
   }
-  catch(error)
-  {
-      return res.status(400).json({error: error.message});
-  }
-}
+};
+
+// const getAccount = async(req, res) =>{
+//   const user = req.user._id;
+//   try{
+//         const account = await Account.findOne({user});
+//         res.status(200).json(account);
+//   }
+//   catch(error)
+//   {
+//       return res.status(400).json({error: error.message});
+//   }
+// }
 
 
 

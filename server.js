@@ -3,8 +3,8 @@ const mongoose = require('mongoose');
 
 require('dotenv').config();
 const users = require('./routes/users.js');
-/* const transactions = require('./routes/transactions.js')
- */const userBankAccounts = require('./routes/bankAccount.js');
+const transactions = require('./routes/transactions.js')
+const userBankAccounts = require('./routes/bankAccount.js');
 
 
 
@@ -23,8 +23,8 @@ app.get('/', (req, res) => {
 const PORT = process.env.PORT || 5000
  app.use('/api/users',users);
  app.use('/api/accounts',userBankAccounts);
-/*  app.use('/api/transactions', transactions);
- */ mongoose.connect(process.env.MONGO_URI).then(()=>{
+ app.use('/api/transactions', transactions);
+ mongoose.connect(process.env.MONGO_URI).then(()=>{
     app.listen(PORT,()=>{
         console.log("connected to the mongoose server on ", PORT);
     })

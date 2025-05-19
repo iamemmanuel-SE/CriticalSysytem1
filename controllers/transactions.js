@@ -84,6 +84,8 @@ const deleteTransaction = async(req,res)=>{
         res.status(400).json({error: 'No such transaction'});
     }
 }
+
+//DEPOSIT MONEY INTO ACCOUNT
 const deposit = async(req,res)=>{
     const { accountName, accountNumber, depositAmount } = req.body;
     
@@ -119,7 +121,7 @@ const deposit = async(req,res)=>{
     const user = await User.findOne({_id: account.user.toString()});
     const emailTemplate = `
 
-    <p>Payment of ${pounds}${depositAmount} has been made to your KnackersBank account, your new balance is ${pounds}${newAmount}</p>
+    <p>Payment of ${pounds}${depositAmount} has been made to your Optimal Bank account, your new balance is ${pounds}${newAmount}</p>
     
   `;
 // Call the Brevo email function
@@ -137,6 +139,8 @@ emailTemplate,
     }
     
 }
+
+// Withdraw Money from account
 const withdrawal = async(req,res)=>{
     const { accountNumber, withdrawalAmount, pin } = req.body;
    
@@ -144,31 +148,32 @@ const withdrawal = async(req,res)=>{
     try{
     const account = await Account.findOne({accountNumber});
     if (!account) {
-        return res.status(400).json({ error: "Account not found" });
+        return res.status(400).json({ error: "This account does not exist" });
     }
 
-    // Check if account is currently locked
-if (account.withdrawalLockUntil && new Date() < account.withdrawalLockUntil) {
-    return res.status(403).json({
-        error: 'Account is locked due to multiple failed withdrawal attempts. Try again later.',
-        withdrawalLockUntil: account.withdrawalLockUntil
-    });
-}
+    // Check if account locked status
+    if (account.withdrawalLockUntil && new Date() < account.withdrawalLockUntil) {
+        return res.status(403).json({
+            error: 'multiple failed withdrawal attempts. Try again later.',
+            withdrawalLockUntil: account.withdrawalLockUntil
+        });
+    }
 
-// If lock has expired, clear it
-if (account.withdrawalLockUntil && new Date() >= account.withdrawalLockUntil) {
-    account.withdrawalLockUntil = null;
-    await account.save();
-}
+    // If lock has expired, clear it
+    if (account.withdrawalLockUntil && new Date() >= account.withdrawalLockUntil) {
+        account.withdrawalLockUntil = null;
+        await account.save();
+    }
     const user = await User.findOne({_id: account.user.toString()});
     if(!user)
     {
-        return res.status(400).json({error: "The user account not found"});
+        return res.status(400).json({error: "account not found"});
     }
 
     if(parseFloat(account.balance.toString()) < parseFloat(withdrawalAmount))
     {
-        res.status(400).json({error:'You do not have insufficient funds.'});
+        res.status(400).json({error:'Insufficient funds.'});
+        console.log(res)// login insufficient funds error
         return;
     }
     //compare pin
@@ -191,18 +196,18 @@ if (account.withdrawalLockUntil && new Date() >= account.withdrawalLockUntil) {
                 //send email to notify user
                 const emailTemplate = `
 
-    <p>Failed multiple withdrawal attempts, we have locked the account for 1minutes, reset your pin</p>
+    <p>Failed multiple withdrawal attempts, account locked for 1 minutes, reset your pin</p>
     
     
   `;
-// Call the Brevo email function
-await sendBrevoEmail({
-subject: 'Failed Withdrawal Attempts',
-to: [{ email: user.email, name: user.username }],
-emailTemplate,
-});
+    // Call the Brevo email function
+    await sendBrevoEmail({
+    subject: 'Failed Withdrawal Attempts',
+    to: [{ email: user.email, name: user.username }],
+    emailTemplate,
+    });
     
-throw err;            
+             
  
         
             }
@@ -236,13 +241,13 @@ throw err;
     <p>If you did not authorize this, call the bank</p>
     
   `;
-// Call the Brevo email function
-await sendBrevoEmail({
-subject: 'New Transaction',
-to: [{ email: user.email, name: user.username }],
-emailTemplate,
-});
-    
+    // Call the Brevo email function
+    await sendBrevoEmail({
+    subject: 'New Transaction',
+    to: [{ email: user.email, name: user.username }],
+    emailTemplate,
+    });
+        
     res.status(200).json(account);
     }
     catch(error){
