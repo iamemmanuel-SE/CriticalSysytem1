@@ -170,14 +170,17 @@ UserSchema.statics.login = async function(email, password, req){
         console.log("login failed attemptps", user.failedAccessAttempt);
         if(user.failedAccessAttempt >= 5){
             console.log("greater than 5");
+
+            //Overlay screen  TIMER =========================================
               user.lockLoginTimer = new Date(Date.now() + 1 * 60 * 1000);
             user.failedAccessAttempt = 0;
             await user.save();
-            const err = new Error('Password is not correct. Your account is locked for 5 minutes.');
+            const err = new Error('Password is not correct. Mutiple attempt, account locked for 1 minutes.');
             err.lockLoginTimer = user.lockLoginTimer;
             const emailTemplate = `
             
-                <p>Failed multiple login attempts, your account is temporary locked for 5 minutes, reset your password after 5 minutes</p>
+                <p>Your account has been temporarily locked for 1 minutes due to multiple failed login attempts. Please wait and then reset your password if needed.</p>
+
                 
                 
               `;
@@ -223,7 +226,7 @@ UserSchema.statics.login = async function(email, password, req){
     const minutesSinceLastLogin = (now - new Date(prevLogin.at)) / 1000/60;
 
     if (distance > 1000 && minutesSinceLastLogin < 60) {
-          user.loginLockTimer = new Date(Date.now() + 5 * 60 * 1000);
+          user.lockLoginTimer = new Date(Date.now() + 5 * 60 * 1000);
 
   // Save the lock status
   await user.save();
@@ -251,7 +254,7 @@ user.lastLogin = currentLogin;
 await user.save();
 // loginLog.success = true;
 // await loginLog.save();
-return user;
+// return user;
     
     //lock the account if 4 attempst fail
 

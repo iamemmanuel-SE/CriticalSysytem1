@@ -35,6 +35,20 @@ const BankAccountSchema = new Schema({
             type: String,
             required:true 
         },
+        resetPinOTP: {
+            type: String,
+          },
+          pinOTPExpiresAt: {
+            type: Date,
+          },
+          failedWithdrawalAttempts: {
+            type: Number,
+            default: 0
+          },
+          withdrawalLockUntil: {
+            type: Date,
+            default: null
+          }
 })
 
 module.exports = mongoose.model('Account', BankAccountSchema);

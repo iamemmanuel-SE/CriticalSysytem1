@@ -39,7 +39,7 @@ const TransactionSchema = new Schema({
 
 },{timestamps:true})
 TransactionSchema.pre('save', async function (next) {
-    const Account = require('./models/Account'); // Import Account model
+   // Import Account model
 
     // Withdrawal: Deduct from user's own account
     if (this.type === 'withdrawal') {
